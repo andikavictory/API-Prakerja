@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengecekan Kode Redeem</title>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #e9ecef; 
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin: 20px 0;
+        }
+        .container {
+            max-width: 600px; /* Maksimal lebar kontainer */
+            margin: 40px auto; /* Memusatkan kontainer */
+            padding: 20px;
+            background-color: #fff; /* Warna latar belakang putih */
+            border-radius: 8px; /* Sudut melengkung */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Bayangan halus */
+        }
+        textarea, input { 
+            margin: 10px 0; 
+            padding: 12px; 
+            width: 100%; 
+            border: 1px solid #ced4da; /* Border halus */
+            border-radius: 4px; /* Sudut melengkung */
+            box-sizing: border-box; /* Pastikan padding dan border tidak mempengaruhi lebar */
+        }
+        button { 
+            padding: 12px 15px; 
+            background-color: #007bff; /* Warna biru */
+            color: white; 
+            border: none; 
+            border-radius: 4px; /* Sudut melengkung */
+            cursor: pointer;
+            font-size: 16px; /* Ukuran font */
+            transition: background-color 0.3s; /* Efek transisi */
+        }
+        button:hover {
+            background-color: #0056b3; /* Warna biru lebih gelap saat hover */
+        }
+        .result { 
+            margin-top: 20px; 
+        }
+        .result div { 
+            padding: 10px; 
+            font-size: 16px; 
+            border-radius: 4px; /* Sudut melengkung untuk hasil */
+            margin: 5px 0; /* Margin vertikal antara hasil */
+        }
+        .result div.success {
+            background-color: #d4edda; /* Warna latar belakang hijau muda */
+            color: #155724; /* Warna teks hijau gelap */
+        }
+        .result div.error {
+            background-color: #f8d7da; /* Warna latar belakang merah muda */
+            color: #721c24; /* Warna teks merah gelap */
+        }
+        /* Gaya untuk loading */
+        .loading {
+            display: none; /* Sembunyikan secara default */
+            text-align: center;
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3; /* Warna latar belakang */
+            border-top: 8px solid #3498db; /* Warna spinner */
+            border-radius: 50%;
+            width: 40px; /* Ukuran spinner */
+            height: 40px; /* Ukuran spinner */
+            animation: spin 1s linear infinite; /* Animasi berputar */
+            margin: 0 auto; /* Memusatkan spinner */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pengecekan Kode Redeem</h1>
+        <form id="redeem-form">
+            <textarea id="codes" placeholder="Masukkan kode redeem, satu per baris" required rows="5"></textarea>
+            <button type="submit">Cek Kode</button>
+        </form>
+        <div id="result" class="result"></div>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Memproses...</p>
+        </div>
+    </div>
+
+    <script>
+        // Menangani event submit pada form
+        document.getElementById('redeem-form').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Mencegah reload halaman
+            const codes = document.getElementById('codes').value.split('\n').map(code => code.trim()).filter(code => code);
+
+            // Pastikan input kode tidak kosong
+            if (codes.length === 0) {
+                alert('Masukkan setidaknya satu kode redeem!');
+                return;
+            }
+
+            // Tampilkan loading
+            const loadingDiv = document.getElementById('loading');
+            loadingDiv.style.display = 'block';
+
+            // Kirim kode-kode tersebut ke server untuk pengecekan
+            const response = await fetch('/check-redeem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ codes }),
+            });
+
+            const results = await response.json();
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Bersihkan hasil sebelumnya
+
+            // Sembunyikan loading setelah mendapatkan hasil
+            loadingDiv.style.display = 'none';
+
+            // Tampilkan hasil dari setiap kode yang dicek
+            results.forEach(result => {
+                const message = document.createElement('div');
+                // Ambil pesan dari data API
+                if (result.success) {
+                    message.innerText = "Aman"; // Tampilkan "Aman" jika sukses
+                    message.classList.add('success'); // Tambahkan kelas untuk styling
+                } else {
+                    message.innerText = "Akun Terindikasi Kecurangan"; // Tampilkan pesan jika tidak valid
+                    message.classList.add('error'); // Tambahkan kelas untuk styling
+                }
+                resultDiv.appendChild(message);
+            });
+        });
+    </script>
+</body>
+</html>
